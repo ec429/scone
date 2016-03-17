@@ -1,12 +1,14 @@
 #!/usr/bin/python
 
-import math
+from math import radians
 import cfg
 
 with open('rssk.cfg') as f:
     kop = cfg.parse(f)
 
 kc = kop['@Kopernicus[Kerbol?System]:FOR[RealSolarSystem]'][0]
+
+print "double epoch = %g;"%(float(kc['Epoch']),)
 
 bodies = kc['Body']
 
@@ -32,10 +34,10 @@ for p in planets:
     data = {'name': p['name'],
             'sma': float(o['semiMajorAxis']),
             'ecc': float(o['eccentricity']),
-            'inc': float(o['inclination']),
-            'lan': float(o['longitudeOfAscendingNode']),
-            'ape': float(o['argumentOfPeriapsis']),
-            'mar': float(o['meanAnomalyAtEpochD']) * math.pi / 180.0,
+            'inc': radians(float(o['inclination'])),
+            'lan': radians(float(o['longitudeOfAscendingNode'])),
+            'ape': radians(float(o['argumentOfPeriapsis'])),
+            'mar': radians(float(o['meanAnomalyAtEpochD'])),
             }
     print "\t{"
     for k,v in data.items():
