@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS := -Wall -Wextra -Werror --pedantic --std=gnu11
+CFLAGS := -Wall -Wextra -Werror --pedantic --std=gnu11 -g
 LIBS := -lm
 OBJS := vectors.o
 INCS := $(OBJS:.o=.h) planets.h
