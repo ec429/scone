@@ -170,7 +170,7 @@ int main(void)
 				left = right;
 				right = tmp;
 			}
-			while (fabs(right - left) > 1e-8) {
+			while (fabs(right - left) > 1e-10) {
 				x = (left + right) / 2.0;
 				y = fy(x, beta);
 				double g = sqrt(1 - x * x), h = sqrt(1 - y * y);
@@ -184,14 +184,11 @@ int main(void)
 	}
 
 
-	double vc = sqrt(sungp) * (y / sqrt(n) + 1.0 / sqrt(m));
-	double vr = sqrt(sungp) * (y / sqrt(n) - 1.0 / sqrt(m));
+	double vc = sqrt(sungp) * (y / sqrt(n) + x / sqrt(m));
+	double vr = sqrt(sungp) * (y / sqrt(n) - x / sqrt(m));
 	struct vector ec = scale(d, vc / c);
 	struct vector v1 = sum(ec, scale(r1, vr / mr1));
-	struct vector v2 = sum(ec, scale(r2, vr / mr2));
-	printf("%g %g\n", vc, vr);
-	print_vector(ec);
-	print_vector(scale(r1, vr / mr1));
+	struct vector v2 = difference(ec, scale(r2, vr / mr2));
 
 	/* Heliocentric velocities */
 	print_vector(v1);
