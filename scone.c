@@ -114,6 +114,7 @@ int main(void)
 	fprintf(stderr, "\n");
 
 	/* Lambert solver, translated from https://github.com/alexmoon/ksp/blob/gh-pages/src/lambert.coffee */
+	/* For simplicity, we use linear bisection where the original used Brent's Method */
 	struct vector d = difference(r2, r1);
 	double c = magnitude(d);
 	double mr1 = magnitude(r1), mr2 = magnitude(r2);
@@ -141,7 +142,7 @@ int main(void)
 			x = right = left * 2.0;
 			y = fy(x, beta);
 			double g = sqrt(x * x - 1), h = sqrt(y * y - 1);
-			val = (-arcoth(x/g) +arcoth(h/y) - x*g + y*h) / pow(g, 3) - tn;
+			val = (-arcoth(x/g) +arcoth(h/y) + x*g - y*h) / pow(g, 3) - tn;
 		} while (val >= 0);
 		if isnan(val) { /* There is apparently a bug that causes this to happen */
 			fprintf(stderr, "NaN detected!  %g %g\n", left, right);
@@ -151,7 +152,7 @@ int main(void)
 			x = (left + right) / 2.0;
 			y = fy(x, beta);
 			double g = sqrt(x * x - 1), h = sqrt(y * y - 1);
-			double val = (-arcoth(x/g) +arcoth(h/y) - x*g + y*h) / pow(g, 3) - tn;
+			double val = (-arcoth(x/g) +arcoth(h/y) + x*g - y*h) / pow(g, 3) - tn;
 			if (val < 0)
 				left = x;
 			else
@@ -167,11 +168,11 @@ int main(void)
 		} else {
 			double left, right;
 			if (tn > tnme) {
-				left = -1.0 + 1e-8;
+				left = -1.0 + 1e-10;
 				right = 0;
 			} else {
 				left = 0;
-				right = 1.0 - 1e-8;
+				right = 1.0 - 1e-10;
 			}
 			double yl = fy(left, beta),
 			       yr = fy(right, beta),
