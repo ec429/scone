@@ -59,16 +59,19 @@ struct vector velocity_at_ut(struct planet p, double ut)
 	return v;
 }
 
+/* escape velocity */
 double ve(struct planet p, double r)
 {
-	return sqrt(2.0 * p.gp / (p.r + r));
+	double rsoi = p.sma * pow(p.gp / sungp, 0.4);
+	return sqrt(2.0 * p.gp * (1 / (p.r + r) - 1 / rsoi));
 }
 
 /* vhe is hyperbolic excess velocity */
 double v_from_vhe(struct planet p, double vhe, double r)
 {
 	/* v² = ve² + vhe² */
-	return sqrt(2.0 * p.gp / (p.r + r) + vhe*vhe);
+	double rsoi = p.sma * pow(p.gp / sungp, 0.4);
+	return sqrt(2.0 * p.gp * (1 / (p.r + r) - 1 / rsoi) + vhe*vhe);
 }
 
 /* Circular orbit velocity at a given altitude */
