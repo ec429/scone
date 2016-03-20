@@ -1,0 +1,14 @@
+scone - a flyby finder
+
+This will eventually be a tool for finding multiple-flyby trajectories around
+ the Solar System.  At the moment, however, it's just a Lambert solver that
+ doesn't even work...
+
+The Lambert solver is based on alexmoon's CoffeeScript Lambert solver,
+ <https://github.com/alexmoon/ksp/blob/gh-pages/src/lambert.coffee>, but has
+ been slightly simplified in the translation to C (in particular, it currently
+ ignores paths longer than 1 orbit, which the original supported).
+The original was licensed under Creative Commons by-nc-sa/4.0 International,
+ which therefore propagates to the corresponding code in scone.
+
+All other parts of scone are under the MIT license.
