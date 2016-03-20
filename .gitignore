@@ -1,3 +1,4 @@
 scone
 *.o
 *.pyc
+planets.h
