@@ -7,8 +7,9 @@ def parse(f):
     last = None
 
     for line in f:
+        line, _, _ = line.partition('//')
         line = line.strip()
-        if line.startswith('//'): continue
+        if not line: continue
         if '=' in line:
             k, _, v = line.partition('=')
             current[k.strip()] = v.strip()

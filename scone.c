@@ -59,6 +59,24 @@ struct vector velocity_at_ut(struct planet p, double ut)
 	return v;
 }
 
+double ve(struct planet p, double r)
+{
+	return sqrt(2.0 * p.gp / (p.r + r));
+}
+
+/* vhe is hyperbolic excess velocity */
+double v_from_vhe(struct planet p, double vhe, double r)
+{
+	/* v² = ve² + vhe² */
+	return sqrt(2.0 * p.gp / (p.r + r) + vhe*vhe);
+}
+
+/* Circular orbit velocity at a given altitude */
+double vcirc(struct planet p, double r)
+{
+	return sqrt(p.gp / (p.r + r));
+}
+
 bool near(double a, double b)
 {
 	if (b == 0)
@@ -78,7 +96,8 @@ static inline double arcoth(double x)
 
 int main(void)
 {
-	/* An example for testing: first Mars window after 1951 */
+	/* An example for testing: first Mars window after 1951.  Should be 6404m/s between 300km orbits */
+	/* Depart vhe should be ~3952m/s, for ~3893m/s depart deltaV */
 	double ut = 29033752-epoch;
 	double tt = 298 * 86400;
 	bool prograde = true;
@@ -197,9 +216,24 @@ int main(void)
 	/* Relative velocities of escape and arrival */
 	struct vector rv1 = difference(v1, pv1);
 	struct vector rv2 = difference(v2, pv2);
-	fprintf(stderr, "Depart: %g\n", magnitude(rv1));
+	printf("Depart: %g\n", magnitude(rv1));
 	print_vector(rv1);
-	fprintf(stderr, "Arrive: %g\n", magnitude(rv2));
+	printf("Arrive: %g\n", magnitude(rv2));
 	print_vector(rv2);
+
+	/* Relative velocities at periapsis */
+	double vp1 = v_from_vhe(planets[2], magnitude(rv1), 300e3);
+	double vp2 = v_from_vhe(planets[3], magnitude(rv2), 300e3);
+	printf("periV:\n");
+	printf("  dep: %g\n", vp1);
+	printf("  arr: %g\n", vp2);
+
+	/* deltas V assuming optimal inclinations */
+	double dv1 = vp1 - vcirc(planets[2], 300e3);
+	double dv2 = vp2 - vcirc(planets[3], 300e3);
+	printf("deltaV:\n");
+	printf("   dep: %g\n", dv1);
+	printf("   arr: %g\n", dv2);
+	printf(" total: %g\n", dv1 + dv2);
 	return 0;
 }
