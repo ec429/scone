@@ -9,7 +9,7 @@ double ea_from_ma(double ma, double ecc)
 	double left = 0, right = M_PI * 2.0, mid, val;
 
 	ma = fmod(ma, 2 * M_PI);
-	while (right - left > 1e-8) {
+	while (right - left > 1e-9) {
 		mid = (left + right) / 2.0;
 		val = mid - ecc * sin(mid);
 		if (val < ma)
@@ -20,16 +20,40 @@ double ea_from_ma(double ma, double ecc)
 	return mid;
 }
 
+static inline double radius_at_ta(struct planet p, double true_anomaly)
+{
+	return p.sma * (1 - p.ecc * p.ecc) / (1.0 + p.ecc * cos(true_anomaly));
+}
+
 struct vector position_at_ut(struct planet p, double ut)
 {
-	double period = 2.0 * M_PI * sqrt(pow(p.sma, 3) / sungp);
+	double n = sqrt(sungp / pow(p.sma, 3));
+	double period = 2.0 * M_PI / n;
 	double mean_anomaly = 2.0 * M_PI * (ut - epoch) / period;
 	double ecc_anomaly = ea_from_ma(mean_anomaly, p.ecc);
 	double true_anomaly = 2.0 * atan2(sqrt(1.0 + p.ecc) * sin(ecc_anomaly / 2.0),
 					  sqrt(1.0 - p.ecc) * cos(ecc_anomaly / 2.0));
-	struct vector v = {p.sma / (1.0 + p.ecc * cos(true_anomaly)), 0, 0};
+	struct vector v = {radius_at_ta(p, true_anomaly), 0, 0};
 
 	v = rotateXY(v, true_anomaly + p.ape);
+	v = rotateYZ(v, p.inc);
+	v = rotateXY(v, p.lan);
+	return v;
+}
+
+struct vector velocity_at_ut(struct planet p, double ut)
+{
+	double n = sqrt(sungp / pow(p.sma, 3));
+	double period = 2.0 * M_PI / n;
+	double mean_anomaly = 2.0 * M_PI * (ut - epoch) / period;
+	double ecc_anomaly = ea_from_ma(mean_anomaly, p.ecc);
+	double true_anomaly = 2.0 * atan2(sqrt(1.0 + p.ecc) * sin(ecc_anomaly / 2.0),
+					  sqrt(1.0 - p.ecc) * cos(ecc_anomaly / 2.0));
+	/* ṙ = (na/sqrt(1-e²)){-sin ν, e+cos ν, 0} */
+	double vscale = n * p.sma / sqrt(1 - p.ecc*p.ecc);
+	struct vector v = {-vscale*sin(true_anomaly), vscale*(p.ecc + cos(true_anomaly)), 0};
+
+	v = rotateXY(v, p.ape);
 	v = rotateYZ(v, p.inc);
 	v = rotateXY(v, p.lan);
 	return v;
@@ -54,15 +78,21 @@ static inline double arcoth(double x)
 
 int main(void)
 {
-	/* An example for testing: 300-day transfer starting at game start */
-	double ut = -epoch; // 19510101T0000Z
-	double tt = 300 * 86400; // 300 days
+	/* An example for testing: first Mars window after 1951 */
+	double ut = 29033752-epoch;
+	double tt = 298 * 86400;
 	bool prograde = true;
+
 	struct vector r1 = position_at_ut(planets[2], ut); // Earth depart
 	struct vector r2 = position_at_ut(planets[3], ut + tt); // Mars arrive
+	struct vector pv1 = velocity_at_ut(planets[2], ut); // Earth depart
+	struct vector pv2 = velocity_at_ut(planets[3], ut + tt); // Mars arrive
 
 	print_vector(r1);
+	print_vector(pv1);
 	print_vector(r2);
+	print_vector(pv2);
+	fprintf(stderr, "\n");
 
 	/* Lambert solver, translated from https://github.com/alexmoon/ksp/blob/gh-pages/src/lambert.coffee */
 	struct vector d = difference(r2, r1);
@@ -159,10 +189,20 @@ int main(void)
 	struct vector ec = scale(d, vc / c);
 	struct vector v1 = sum(ec, scale(r1, vr / mr1));
 	struct vector v2 = sum(ec, scale(r2, vr / mr2));
+	printf("%g %g\n", vc, vr);
+	print_vector(ec);
+	print_vector(scale(r1, vr / mr1));
 
 	/* Heliocentric velocities */
 	print_vector(v1);
 	print_vector(v2);
 
+	/* Relative velocities of escape and arrival */
+	struct vector rv1 = difference(v1, pv1);
+	struct vector rv2 = difference(v2, pv2);
+	fprintf(stderr, "Depart: %g\n", magnitude(rv1));
+	print_vector(rv1);
+	fprintf(stderr, "Arrive: %g\n", magnitude(rv2));
+	print_vector(rv2);
 	return 0;
 }
